@@ -33,7 +33,7 @@ pipeline{
   }
     stage("7.deploytoPROD"){
       steps{
-        deploy adapters: [tomcat9(credentialsId: 'tomcat-cred', path: '', url: 'http://172.31.0.225:7000/')], contextPath: null, war: 'target/*.war'
+        deploy adapters: [tomcat9(credentialsId: 'Tomcat-cred', path: '', url: 'http://172.31.0.225:7000/')], contextPath: null, war: 'target/*.war'
       }
     }
     stage("8.EmailNotification"){
