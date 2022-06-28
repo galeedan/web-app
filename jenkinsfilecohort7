@@ -1,27 +1,49 @@
 pipeline{
-  agent any
-  tools {
+  agent {label 'node9'}
+  tools{
     maven "3.8.6 maven"
   }
   stages{
-    stage('Git-Clone'){
+    stage("1.CodeClone"){
       steps{
-        git credentialsId: 'Github-Cred', url: 'https://github.com/team16flight/web-app.git'
+        git credentialsId: 'Github-Cred', url: 'https://github.com/galeedan/web-app.git'
       }
     }
-    stage('Build'){
+    stage("2.Build"){
       steps{
-        common("Build")
+        sh "mvn clean package"
       }
     }
-    stage('Execute-SonarQube-Report'){
+    stage("3.CodeQuality"){
       steps{
-        common("SonarQube Report")
+        sh "mvn sonar:sonar"
       }
     }
-    stage('BackUp'){
+    stage("4.Artifacts"){
       steps{
-        common("Upload Into Nexus")
+        sh "mvn deploy"
+      }
+    }
+    stage("5.DeploytoUAT"){
+      steps{
+        deploy adapters: [tomcat9(credentialsId: 'tomcat-cred', path: '', url: 'http://172.31.0.225.23:7000/')], contextPath: null, war: 'target/*.war'
+      }
+    }
+    stage("6.Approval"){
+      steps{
+        timeout(time:5, unit:'DAYS'){
+        input message: 'Approval for Production'
+      }
+    }
+  }
+    stage("7.deploytoPROD"){
+      steps{
+        deploy adapters: [tomcat9(credentialsId: 'tomcat-cred', path: '', url: 'http://172.31.0.225:7000/')], contextPath: null, war: 'target/*.war'
+      }
+    }
+    stage("8.EmailNotification"){
+      steps{
+        emailext body: 'This is Build Success', subject: 'Build Success', to: 'info@acadalearning.com'
       }
     }
   }
