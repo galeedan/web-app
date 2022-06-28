@@ -1,39 +1,28 @@
 pipeline{
- agent any
-  tools
-  maven "3.8.6 maven"
-stage ("1.GitClone" ){
- sh "echo start git clone" 
- git "https://github.com/galeedan/web-app.git"
-}
-
-stage ("2.Build"){
-sh "echo build application with maven"
-sh "${MHD}/bin/mvn package"
-}
-
-stage ("3.CodeQuality"){
-  sh "echo performing code test with sonarqube"
-  sh "${MHD}/bin/mvn sonar:sonar"
-}
-/*
-stage ("4.Artifactory"){
-  sh "echo Backup to Nexus"
-  sh "${MHD}/bin/mvn deploy"
-}
-*/
-  stage ("5.DeploytoUAT"){
-  sh "echo deploying to application server"
- deploy adapters: [tomcat9(credentialsId: 'Tomcat-cred', path: '', url: 'http://35.183.46.83:7000/')], contextPath: null, war: 'target/*.war'
- }
-  stage ("6.Approval"){
-  sh "echo Approval Needed"
-}  
-stage ("7.EmailNotification"){
-  sh "echo send email notification to Devops team"
-  emailext body: 'This is Build Success', subject: 'Build Success', to: 'info@acadalearning.com'
-}
-stage ("8.slack notification"){
-    sh "echo send notification"
-}
+  agent any
+  tools {
+    maven "3.8.6 maven"
+  }
+  stages{
+    stage('Git-Clone'){
+      steps{
+        git credentialsId: 'Github-Cred', url: 'https://github.com/team16flight/web-app.git'
+      }
+    }
+    stage('Build'){
+      steps{
+        common("Build")
+      }
+    }
+    stage('Execute-SonarQube-Report'){
+      steps{
+        common("SonarQube Report")
+      }
+    }
+    stage('BackUp'){
+      steps{
+        common("Upload Into Nexus")
+      }
+    }
+  }
 }
